@@ -18,7 +18,8 @@
     "crypto": "^1.0.1",
     "ethers": "^5.7.2",
     "express": "^5.1.0",
-    "form-data": "^4.0.2"
+    "form-data": "^4.0.2",
+    "nodemon": "^3.1.10"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.3",

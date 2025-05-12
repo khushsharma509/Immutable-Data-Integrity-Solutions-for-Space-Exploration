@@ -15,7 +15,7 @@ function safeBase64Decode(str) {
 }
 
 export default function DecryptPage() {
-  const [inputMethod, setInputMethod] = useState('cid'); // 'cid' or 'file'
+  const [inputMethod, setInputMethod] = useState('cid');
   const [txHash, setTxHash] = useState('');
   const [cid, setCid] = useState('');
   const [encFile, setEncFile] = useState(null);
@@ -41,28 +41,24 @@ export default function DecryptPage() {
 
   // Fetch CID from blockchain by transaction hash
   const handleFetchCidFromTx = async () => {
-  if (!txHash) return alert('Enter transaction hash!');
-  setLoading(true);
-  try {
-    // Use the new endpoint
-    const res = await axios.get(`http://localhost:5000/tx-to-cid`, {
-      params: { txHash }
-    });
-    
-    if (res.data.success && res.data.cid) {
-      setCid(res.data.cid);
-      alert('CID fetched: ' + res.data.cid);
-    } else {
-      throw new Error(res.data.error || 'No CID found');
+    if (!txHash) return alert('Enter transaction hash!');
+    setLoading(true);
+    try {
+      const res = await axios.get(`http://localhost:5000/tx-to-cid`, {
+        params: { txHash }
+      });
+      if (res.data.success && res.data.cid) {
+        setCid(res.data.cid);
+        alert('CID fetched: ' + res.data.cid);
+      } else {
+        throw new Error(res.data.error || 'No CID found');
+      }
+    } catch (error) {
+      alert('Failed to fetch CID: ' + (error.response?.data?.details || error.message));
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Full error:', error);
-    alert('Failed to fetch CID: ' + (error.response?.data?.details || error.message));
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Fetch encrypted file from IPFS
   const handleFetchFromIPFS = async () => {
@@ -75,7 +71,7 @@ export default function DecryptPage() {
       const parsedChunks = JSON.parse(decodedData);
       if (!Array.isArray(parsedChunks)) throw new Error('Invalid data format from IPFS');
       setChunks(parsedChunks);
-      setEncFile({ name: `ipfs-${cid}.json` }); // mock file object for extension
+      setEncFile({ name: `ipfs-${cid}.json` });
     } catch (error) {
       alert('IPFS fetch failed: ' + error.message);
     }
@@ -109,47 +105,64 @@ export default function DecryptPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 flex items-center justify-center p-4 overflow-hidden">
+      {/* Cosmic animated background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute w-full h-full bg-[url('/cosmic-pattern.svg')] opacity-10 animate-pan-infinite" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse-slow-delay" />
+      </div>
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl bg-white/5 backdrop-blur-lg rounded-2xl shadow-xl p-8"
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, type: "spring" }}
+        className="w-full max-w-2xl bg-white/10 backdrop-blur-2xl rounded-2xl shadow-2xl p-8 relative z-10 border border-purple-900/30"
       >
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 mb-8 text-center">
-          Data Decryption Portal
-        </h1>
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.7, type: "spring" }}
+          className="text-4xl font-extrabold text-center mb-8 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent "
+        >
+          🪐 Data Decryption Portal
+        </motion.h1>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Input Method Toggle */}
-          <div className="flex gap-4 mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex gap-4 mb-6"
+          >
             <button
               onClick={() => setInputMethod('file')}
-              className={`flex-1 py-2 rounded-lg ${
+              className={`flex-1 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md ${
                 inputMethod === 'file' 
-                ? 'bg-purple-600 text-white' 
-                : 'bg-gray-800 text-gray-400'
+                  ? 'bg-purple-600 text-white scale-105 ring-2 ring-purple-400'
+                  : 'bg-gray-800 text-gray-400 hover:bg-purple-700/40'
               }`}
             >
               File Upload
             </button>
             <button
               onClick={() => setInputMethod('cid')}
-              className={`flex-1 py-2 rounded-lg ${
+              className={`flex-1 py-2 rounded-lg font-semibold transition-all duration-300 shadow-md ${
                 inputMethod === 'cid' 
-                ? 'bg-purple-600 text-white' 
-                : 'bg-gray-800 text-gray-400'
+                  ? 'bg-purple-600 text-white scale-105 ring-2 ring-purple-400'
+                  : 'bg-gray-800 text-gray-400 hover:bg-purple-700/40'
               }`}
             >
               IPFS CID / Blockchain Tx
             </button>
-          </div>
+          </motion.div>
 
           {/* File Upload Section */}
           {inputMethod === 'file' && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="border-2 border-dashed border-gray-700 rounded-xl p-6 text-center cursor-pointer"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="border-2 border-dashed border-purple-500/30 rounded-xl p-6 text-center cursor-pointer bg-gradient-to-br from-gray-900/60 to-gray-800/30 backdrop-blur-md hover:shadow-lg transition-shadow duration-300"
             >
               <input 
                 type="file" 
@@ -162,14 +175,14 @@ export default function DecryptPage() {
                 className="cursor-pointer text-gray-300 hover:text-white transition-colors"
               >
                 {encFile ? (
-                  <span className="text-green-400">✓ {encFile.name}</span>
+                  <span className="text-green-400 font-semibold animate-bounce">✓ {encFile.name}</span>
                 ) : (
                   <>
-                    <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-12 h-12 mx-auto mb-4 text-purple-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
-                    <p className="text-lg">Upload Encrypted File</p>
-                    <p className="text-sm text-gray-500 mt-2">.json format required</p>
+                    <p className="text-lg font-semibold">Upload Encrypted File</p>
+                    <p className="text-sm text-purple-300 mt-2">.json format required</p>
                   </>
                 )}
               </label>
@@ -179,27 +192,27 @@ export default function DecryptPage() {
           {/* CID Input Section */}
           {inputMethod === 'cid' && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
               <div className="space-y-2">
-                <label className="text-gray-300">Blockchain Tx Hash (get CID)</label>
+                <label className="text-purple-200 font-semibold">Blockchain Tx Hash (get CID)</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={txHash}
                     onChange={(e) => setTxHash(e.target.value)}
-                    className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                    className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                     placeholder="Enter transaction hash"
                   />
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={handleFetchCidFromTx}
                     disabled={!txHash || loading}
-                    className={`px-6 py-3 bg-purple-600 text-white rounded-lg ${
-                      !txHash || loading ? 'opacity-50 cursor-not-allowed' : ''
+                    className={`px-6 py-3 bg-purple-600 text-white rounded-lg font-bold shadow transition-all ${
+                      !txHash || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'
                     }`}
                   >
                     {loading ? 'Fetching...' : 'Get CID'}
@@ -207,22 +220,22 @@ export default function DecryptPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-gray-300">IPFS CID</label>
+                <label className="text-purple-200 font-semibold">IPFS CID</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={cid}
                     onChange={(e) => setCid(e.target.value)}
-                    className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                    className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                     placeholder="Enter IPFS Content Identifier (CID)"
                   />
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={handleFetchFromIPFS}
                     disabled={!cid || loading}
-                    className={`px-6 py-3 bg-purple-600 text-white rounded-lg ${
-                      !cid || loading ? 'opacity-50 cursor-not-allowed' : ''
+                    className={`px-6 py-3 bg-purple-600 text-white rounded-lg font-bold shadow transition-all ${
+                      !cid || loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'
                     }`}
                   >
                     {loading ? '🌐 Fetching...' : '🌐 Fetch'}
@@ -233,37 +246,41 @@ export default function DecryptPage() {
           )}
 
           {/* Key/IV Inputs */}
-          <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
-              <label className="text-gray-300">Decryption Key</label>
+              <label className="text-purple-200 font-semibold">Decryption Key</label>
               <input
                 type="text"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
-                className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                 placeholder="Enter your encryption key (hex format)"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-gray-300">Initialization Vector (IV)</label>
+              <label className="text-purple-200 font-semibold">Initialization Vector (IV)</label>
               <input
                 type="text"
                 value={iv}
                 onChange={(e) => setIv(e.target.value)}
-                className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full p-3 bg-gray-800 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
                 placeholder="Enter your IV (hex format)"
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Decrypt Button */}
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.07 }}
+            whileTap={{ scale: 0.96 }}
             onClick={handleDecrypt}
             disabled={!chunks.length || !key || !iv || loading}
-            className={`w-full py-3 rounded-lg font-bold bg-gradient-to-r from-purple-500 to-pink-600 text-white ${
-              (!chunks.length || !key || !iv || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg transition-all'
+            className={`w-full py-3 rounded-lg font-bold bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg transition-all ${
+              (!chunks.length || !key || !iv || loading) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-pink-400/30'
             }`}
           >
             {loading ? '🔓 Decrypting...' : '🔓 Decrypt File'}
@@ -276,7 +293,8 @@ export default function DecryptPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="mt-6 bg-gray-800/50 rounded-xl p-6"
+                transition={{ duration: 0.4 }}
+                className="mt-6 bg-gray-800/60 rounded-xl p-6 shadow-lg border border-purple-500/20"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-semibold text-green-400">Decrypted Content</h3>
@@ -284,7 +302,7 @@ export default function DecryptPage() {
                     whileHover={{ scale: 1.05 }}
                     href={downloadUrl}
                     download={`decrypted.${downloadExt}`}
-                    className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-all"
+                    className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm transition-all text-white font-semibold"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -292,7 +310,7 @@ export default function DecryptPage() {
                     Download
                   </motion.a>
                 </div>
-                <pre className="whitespace-pre-wrap break-words bg-gray-900 rounded-lg p-4 max-h-96 overflow-auto">
+                <pre className="whitespace-pre-wrap break-words bg-gray-900/80 rounded-lg p-4 max-h-96 overflow-auto text-green-200 shadow-inner">
                   {decrypted}
                 </pre>
               </motion.div>
@@ -300,6 +318,30 @@ export default function DecryptPage() {
           </AnimatePresence>
         </div>
       </motion.div>
+      {/* Custom Animations */}
+      <style jsx global>{`
+        @keyframes pan {
+          0% { background-position: 0% 0%; }
+          100% { background-position: 100% 100%; }
+        }
+        .animate-pan-infinite {
+          animation: pan 120s linear infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.1; }
+          50% { opacity: 0.2; }
+        }
+        .animate-pulse-slow {
+          animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .animate-pulse-slow-delay {
+          animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          animation-delay: 2s;
+        }
+        .drop-shadow-glow {
+          filter: drop-shadow(0 0 12px #c084fc);
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,468 +1,290 @@
+// pages/index.js
 'use client';
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { 
-  connectWallet, 
-  disconnectWallet,
-  checkWalletConnection
-} from './services/blockchainService';
+import { useState, useEffect } from 'react';
+import NumberTypewriter from './components/NumberTypewriter';
 
-export default function Home() {
-  const [inputData, setInputData] = useState('');
-  const [chunks, setChunks] = useState([]);
-  const [hashes, setHashes] = useState([]);
-  const [opReturns, setOpReturns] = useState([]);
-  const [key, setKey] = useState('');
-  const [iv, setIv] = useState('');
-  const [userKey, setUserKey] = useState('');
-  const [userIv, setUserIv] = useState('');
-  const [reconData, setReconData] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  // Blockchain related states
-  const [walletConnected, setWalletConnected] = useState(false);
+import Image from 'next/image';
+
+
+export default function SpaceBlockchainExplorer() {
   const [walletAddress, setWalletAddress] = useState('');
-  const [networkName, setNetworkName] = useState('');
-  const [ipfsCid, setIpfsCid] = useState('');
-  const [txHash, setTxHash] = useState('');
-  const [blockchainLoading, setBlockchainLoading] = useState(false);
-  const [blockchainError, setBlockchainError] = useState('');
+  const [isEncrypted, setIsEncrypted] = useState(false);
 
-  // Check wallet connection on component mount
-  useEffect(() => {
-    const checkWallet = async () => {
-      if (typeof window !== 'undefined') {
-        try {
-          const walletStatus = await checkWalletConnection();
-          setWalletConnected(walletStatus.connected);
-          setWalletAddress(walletStatus.address);
-          setNetworkName(walletStatus.networkName);
-        } catch (error) {
-          console.error("Error checking wallet:", error);
-        }
-      }
-    };
-    
-    checkWallet();
-    
-    // Set up event listeners for wallet/chain changes
-    if (typeof window !== 'undefined' && window.ethereum) {
-      window.ethereum.on('accountsChanged', checkWallet);
-      window.ethereum.on('chainChanged', checkWallet);
-      
-      return () => {
-        window.ethereum.removeListener('accountsChanged', checkWallet);
-        window.ethereum.removeListener('chainChanged', checkWallet);
-      };
-    }
-  }, []);
-
-  // Handle wallet connection
-  const handleConnectWallet = async () => {
-    setBlockchainLoading(true);
-    setBlockchainError('');
-    
+  // Mock blockchain connection
+  const connectWallet = async () => {
     try {
-      const walletInfo = await connectWallet();
-      setWalletConnected(true);
-      setWalletAddress(walletInfo.address);
-      setNetworkName(walletInfo.networkName || 'exSat Network');
+      // Replace with actual wallet connection logic
+      const mockAddress = '0x3f5...5eC';
+      setWalletAddress(mockAddress);
+      alert('Mock wallet connected! (Replace with actual connection)');
     } catch (error) {
-      console.error("Error connecting wallet:", error);
-      setBlockchainError(error.message || 'Failed to connect wallet');
-    } finally {
-      setBlockchainLoading(false);
+      console.error('Wallet connection error:', error);
     }
   };
 
-  // Handle wallet disconnection
-  const handleDisconnectWallet = () => {
-    disconnectWallet();
-    setWalletConnected(false);
-    setWalletAddress('');
-    setNetworkName('');
-    setIpfsCid('');
-    setTxHash('');
-  };
 
-  // Encrypt, chunk, hash
-  const handleEncrypt = async () => {
-    setLoading(true);
-    setOpReturns([]);
-    setReconData('');
-    try {
-      const res = await axios.post('http://localhost:5000/encrypt', { data: inputData });
-      setChunks(res.data.chunks);
-      setHashes(res.data.hashes);
-      setKey(res.data.key);
-      setIv(res.data.iv);
-      setUserKey(res.data.key); // Pre-fill user fields
-      setUserIv(res.data.iv);
-    } catch (e) {
-      console.error('Encryption error details:', e.response?.data || e.message);
-      alert(`Encryption failed: ${e.response?.data?.details || e.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Anchor hashes
-  const handleAnchor = async () => {
-    setLoading(true);
-    const scripts = [];
-    for (const hash of hashes) {
-      const res = await axios.post('http://localhost:5000/anchor', { hash });
-      scripts.push(res.data.opReturnScript);
-    }
-    setOpReturns(scripts);
-    setLoading(false);
-  };
-
-  // Store on blockchain
-  const handleStoreOnChain = async () => {
-    setBlockchainLoading(true);
-    setBlockchainError('');
-    
-    try {
-      if (!walletConnected) {
-        await handleConnectWallet();
-        if (!walletConnected) return;
-      }
-      
-      if (!chunks.length) {
-        throw new Error("Please encrypt some data first");
-      }
-      
-      // Upload to IPFS via our backend
-      const encryptedData = chunks.join('');
-      const response = await axios.post('http://localhost:5000/upload-ipfs', { 
-        encryptedData
-      });
-      
-      if (!response.data.cid) {
-        throw new Error("Failed to get CID from IPFS");
-      }
-      
-      const cid = response.data.cid;
-      setIpfsCid(cid);
-      
-      // Store CID on blockchain
-      const storeResponse = await axios.post('http://localhost:5000/store-on-chain', {
-        cid
-      });
-      
-      if (storeResponse.data.success) {
-        setTxHash(storeResponse.data.transactionHash);
-        alert('Successfully stored on blockchain!');
-      } else {
-        throw new Error(storeResponse.data.error || "Transaction failed");
-      }
-    } catch (error) {
-      console.error("Error storing on chain:", error);
-      setBlockchainError(error.message || 'Failed to store on blockchain');
-    } finally {
-      setBlockchainLoading(false);
-    }
-  };
-
-  // Retrieve from blockchain
-  const handleRetrieveFromChain = async () => {
-    setBlockchainLoading(true);
-    setBlockchainError('');
-    
-    try {
-      if (!walletConnected) {
-        await handleConnectWallet();
-        if (!walletConnected) return;
-      }
-      
-      const response = await axios.get('http://localhost:5000/retrieve-from-chain');
-      
-      if (response.data.success) {
-        setIpfsCid(response.data.cid);
-        
-        // Fetch data from IPFS
-        const ipfsResponse = await axios.post('http://localhost:5000/fetch-ipfs', { 
-          cid: response.data.cid
-        });
-        
-        if (ipfsResponse.data.success) {
-          alert(`Successfully retrieved data from IPFS with CID: ${response.data.cid}`);
-        }
-      } else {
-        throw new Error(response.data.error || "Retrieval failed");
-      }
-    } catch (error) {
-      console.error("Error retrieving from blockchain:", error);
-      setBlockchainError(error.message || 'Failed to retrieve from blockchain');
-    } finally {
-      setBlockchainLoading(false);
-    }
-  };
-
-  // Reconstruct (decrypt) data
-  const handleReconstruct = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post('http://localhost:5000/reconstruct', {
-        chunks,
-        key: userKey,
-        iv: userIv
-      });
-      setReconData(res.data.data);
-    } catch (e) {
-      setReconData('Decryption failed. Check your key, IV, and chunks.');
-    }
-    setLoading(false);
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 flex flex-col items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl bg-white/10 rounded-2xl shadow-2xl p-8 backdrop-blur-md"
-      >
-        <div className="flex gap-4 mb-8">
-          <Link href="/encrypt" passHref>
-            <button className="px-15 py-7 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-bold transition">
-              Go to Encrypt Page
-            </button>
-          </Link>
-          <Link href="/decrypt" passHref>
-            <button className="px-15 py-7 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-bold transition">
-              Go to Decrypt Page
-            </button>
-          </Link>
-        </div>
-        
-        {/* Wallet Connection UI */}
-        <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-          <h2 className="text-xl font-bold text-white mb-3">Blockchain Connection</h2>
-          {walletConnected ? (
-            <div className="text-white">
-              <div className="flex justify-between items-center mb-2">
-                <div>
-                  <span className="text-gray-400">Connected: </span>
-                  <span className="font-mono">{walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}</span>
-                </div>
-                <button
-                  onClick={handleDisconnectWallet}
-                  className="py-1 px-3 bg-red-500 hover:bg-red-600 rounded text-sm text-white font-bold transition"
-                >
-                  Disconnect
-                </button>
-              </div>
-              <p className="mb-2">
-                <span className="text-gray-400">Network: </span>
-                <span className={networkName.includes('exSat') ? 'text-green-400' : 'text-yellow-400'}>
-                  {networkName || 'Unknown'}
-                </span>
-              </p>
-              {ipfsCid && (
-                <p className="mb-2">
-                  <span className="text-gray-400">IPFS CID: </span>
-                  <span className="font-mono text-blue-300">{ipfsCid}</span>
-                </p>
-              )}
-              {txHash && (
-                <p className="mb-2">
-                  <span className="text-gray-400">TX Hash: </span>
-                  <a 
-                    href={`https://scan.exsat.network/tx/${txHash}`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="font-mono text-green-300 hover:underline"
-                  >
-                    {txHash.substring(0, 10)}...
-                  </a>
-                </p>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={handleConnectWallet}
-              disabled={blockchainLoading}
-              className={`py-2 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-bold transition ${blockchainLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {blockchainLoading ? 'Connecting...' : 'Connect Wallet'}
-            </button>
-          )}
-          {blockchainError && (
-            <p className="mt-2 text-red-400 text-sm">{blockchainError}</p>
-          )}
-        </div>
-        
-        <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-6 text-center drop-shadow-lg">
-          <span className="text-blue-400">Bitcoin Satellite</span> Data Integrity Network
-        </h1>
-        <textarea
-          className="w-full h-32 p-4 rounded-lg bg-gray-900 text-white border-2 border-blue-400 focus:ring-2 focus:ring-blue-400 outline-none transition"
-          placeholder="Enter data to encrypt and anchor"
-          value={inputData}
-          onChange={e => setInputData(e.target.value)}
-        />
-        <div className="flex flex-col md:flex-row gap-4 mt-6">
-          <button
-            onClick={handleEncrypt}
-            disabled={loading || !inputData}
-            className={`flex-1 py-3 rounded-lg text-lg font-bold transition bg-blue-500 hover:bg-blue-600 text-white shadow-lg ${loading || !inputData ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {loading ? 'Encrypting...' : 'Encrypt & Chunk Data'}
-          </button>
-          <button
-            onClick={handleAnchor}
-            disabled={loading || hashes.length === 0}
-            className={`flex-1 py-3 rounded-lg text-lg font-bold transition bg-green-500 hover:bg-green-600 text-white shadow-lg ${loading || hashes.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {loading ? 'Anchoring...' : 'Anchor Hashes on Bitcoin'}
-          </button>
-        </div>
+    <div className="cosmic-container">
+      {/* Navigation */}
 
-        {/* Blockchain Actions */}
-        {chunks.length > 0 && (
-          <div className="flex flex-col md:flex-row gap-4 mt-4">
-            <button
-              onClick={handleStoreOnChain}
-              disabled={blockchainLoading || !chunks.length}
-              className={`flex-1 py-3 rounded-lg text-lg font-bold transition bg-indigo-500 hover:bg-indigo-600 text-white shadow-lg ${blockchainLoading || !chunks.length ? 'opacity-50 cursor-not-allowed' : ''}`}
+
+      {/* Hero Section */}
+      <div className="hero-orbit mb-45">
+        <div className="stellar-overlay text-2xl">
+          <h1 className='text-6xl mb-8'>🌌 SpaceLedger-Anchored Space Data</h1>
+          <h2 className="flex items-center justify-center gap-2 mb-18 text-center text-3xl">
+            Powered by
+            <Image
+              src="/assets/exsat-logo-removebg-preview.png"
+              alt="exSat logo"
+              width={35}
+              height={35}
+              className="object-contain"
+            />
+            exSat(Blockchain)
+          </h2>
+          <div className="encryption-controls">
+            <Link
+              href="/encrypt"
+              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow hover:scale-105 transition"
             >
-              {blockchainLoading ? 'Processing...' : 'Store on exSat Blockchain'}
-            </button>
-            <button
-              onClick={handleRetrieveFromChain}
-              disabled={blockchainLoading}
-              className={`flex-1 py-3 rounded-lg text-lg font-bold transition bg-amber-500 hover:bg-amber-600 text-white shadow-lg ${blockchainLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              🔒 Encrypt Transmission
+            </Link>
+            <Link
+              href="/decrypt"
+              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold shadow hover:scale-105 transition flex items-center gap-3"
             >
-              {blockchainLoading ? 'Retrieving...' : 'Retrieve from Blockchain'}
-            </button>
+              🔓 Decrypt Archives
+            </Link>
           </div>
-        )}
 
-        <AnimatePresence>
-          {hashes.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-8"
-            >
-              <h3 className="text-xl font-semibold text-blue-300 mb-2">Chunk Hashes:</h3>
-              <ul className="bg-gray-800 rounded-lg p-4 space-y-1 max-h-40 overflow-y-auto text-white text-sm">
-                {hashes.map((hash, idx) => (
-                  <motion.li
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="flex items-center space-x-2"
-                  >
-                    <span className="text-gray-400 mr-2">{idx + 1}.</span>
-                    <input
-                      type="text"
-                      className="flex-1 bg-gray-900 border border-blue-400 rounded px-2 py-1 text-white"
-                      value={hash}
-                      onChange={e => {
-                        const newHashes = [...hashes];
-                        newHashes[idx] = e.target.value;
-                        setHashes(newHashes);
-                      }}
-                      style={{ minWidth: 0 }}
-                    />
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <div className="real-time-stats grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 px-4 max-w-4xl mx-auto">
+  <div className="stat-card bg-slate-800/80 rounded-2xl p-6 shadow-lg border border-slate-700/50 text-center">
+    <h3 className="text-xl font-semibold mb-2">🚀 Space Data Blocks</h3>
+    <div className="text-3xl font-bold text-blue-400 h-12 flex items-center justify-center">
+      <NumberTypewriter number={1402921} />
+    </div>
+  </div>
+  <div className="stat-card bg-slate-800/80 rounded-2xl p-6 shadow-lg border border-slate-700/50 text-center">
+    <h3 className="text-xl font-semibold mb-2">🛰 Live Satellites</h3>
+    <div className="text-3xl font-bold text-purple-400 h-12 flex items-center justify-center">
+      <NumberTypewriter number={2843} />
+    </div>
+  </div>
+</div>
+        </div>
+      </div>
 
-        <AnimatePresence>
-          {opReturns.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-8"
-            >
-              <h3 className="text-xl font-semibold text-green-300 mb-2">OP_RETURN Scripts:</h3>
-              <ul className="bg-gray-800 rounded-lg p-4 space-y-1 max-h-40 overflow-y-auto text-white text-sm">
-                {opReturns.map((script, idx) => (
-                  <motion.li
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                  >
-                    {script}
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Website Facts Section */}
+      <div className="max-w-6xl mx-auto my-16 px-4">
+        <h2 className="text-4xl font-bold text-center mb-10 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent drop-shadow-lg">
+          🚀 SpaceLedger Facts
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="bg-slate-800/80 rounded-2xl p-6 flex flex-col items-center text-center shadow-lg border border-blue-700/30 hover:scale-105 hover:shadow-blue-500/30 transition-transform duration-300 space-y-4">
+            <span className="text-4xl mb-2 animate-bounce">🔒</span>
+            <h3 className="text-xl md:text-2xl font-semibold text-blue-300">Tamper-Proof Records</h3>
+            <p className="text-blue-100 text-base md:text-lg leading-relaxed">Blockchain ensures space data cannot be altered or deleted, protecting against tampering.</p>
+          </div>
+          <div className="bg-slate-800/80 rounded-2xl p-6 flex flex-col items-center text-center shadow-lg border border-purple-700/30 hover:scale-105 hover:shadow-purple-500/30 transition-transform duration-300 space-y-4">
+            <span className="text-4xl mb-2 animate-spin-slow">🛰️</span>
+            <h3 className="text-xl md:text-2xl font-semibold text-purple-300">Enhanced Security</h3>
+            <p className="text-purple-100 text-base md:text-lg leading-relaxed">Decentralized storage reduces risks of hacking, breaches, and system failures</p>
+          </div>
+          <div className="bg-slate-800/80 rounded-2xl p-6 flex flex-col items-center text-center shadow-lg border border-cyan-700/30 hover:scale-105 hover:shadow-cyan-500/30 transition-transform duration-300 space-y-4">
+            <span className="text-4xl mb-2 animate-pulse">🌐</span>
+            <h3 className="text-xl md:text-2xl font-semibold text-cyan-300">Decentralized Storage</h3>
+            <p className="text-cyan-100 text-base md:text-lg leading-relaxed">Data is stored on IPFS and exSat, making it censorship-resistant and always available.</p>
+          </div>
+          <div className="bg-slate-800/80 rounded-2xl p-6 flex flex-col items-center text-center shadow-lg border border-pink-700/30 hover:scale-105 hover:shadow-pink-500/30 transition-transform duration-300 space-y-4">
+            <span className="text-4xl mb-2 animate-float">✨</span>
+            <h3 className="text-xl md:text-2xl font-semibold text-pink-300">Automated Integrity & Access</h3>
+            <p className="text-pink-100 text-base md:text-lg leading-relaxed">Smart contracts automate data verification and restrict access to authorized users</p>
+          </div>
+        </div>
+      </div>
 
-        <AnimatePresence>
-          {chunks.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-8"
-            >
-              <h3 className="text-lg font-semibold text-yellow-300 mb-2">Decryption Key & IV:</h3>
-              <div className="bg-gray-800 rounded-lg p-4 text-white text-xs break-all space-y-2">
-                <div>
-                  <label className="font-bold mr-2">Key:</label>
-                  <input
-                    type="text"
-                    className="w-full bg-gray-900 border border-blue-400 rounded px-2 py-1 text-white"
-                    value={userKey}
-                    onChange={e => setUserKey(e.target.value)}
-                    placeholder="Enter decryption key"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold mr-2">IV:</label>
-                  <input
-                    type="text"
-                    className="w-full bg-gray-900 border border-blue-400 rounded px-2 py-1 text-white"
-                    value={userIv}
-                    onChange={e => setUserIv(e.target.value)}
-                    placeholder="Enter IV"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleReconstruct}
-                className="mt-4 px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-white font-bold transition"
-              >
-                Reconstruct & Decrypt Data
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        <AnimatePresence>
-          {reconData && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-8"
-            >
-              <h3 className="text-lg font-semibold text-purple-300 mb-2">Reconstructed Data:</h3>
-              <div className="bg-gray-900 rounded-lg p-4 text-white text-sm break-all">
-                {reconData}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-      <footer className="mt-8 text-gray-400 text-sm text-center">
-        &copy; {new Date().getFullYear()} Bitcoin Satellite Hackathon Project
-      </footer>
+
+      {/* Mission Grid */}
+      <div className="mission-grid flex items-center justify-center gap-2 mb-18 text-center text-xl">
+        <div className="mission-card blockchain-verified">
+          <h3>🪐 Voyager Deep Space Data</h3>
+          <div className="mission-meta">
+            <span>🔗 Block #589432</span>
+            <span>📡 24.5TB Secured</span>
+          </div>
+          <a href="https://scan-testnet.exsat.network/address/0xD8ab45e342b310F3Ee9cD418e2fB33053fF076eE">
+            <button className="hologram-button">
+              Access Quantum Stream 🌌
+            </button>
+          </a>
+        </div>
+      </div>
+
+      <style jsx>{`
+        :global(body) {
+          margin: 0;
+          background: linear-gradient(to bottom right, #0a0e2a, #1a1f4b);
+          color: #e0e7ff;
+          font-family: 'Space Mono', monospace;
+        }
+
+        .cosmic-container {
+          min-height: 100vh;
+          position: relative;
+          overflow-x: hidden;
+        }
+
+        .space-nav {
+          display: flex;
+          justify-content: space-between;
+          padding: 1.5rem;
+          background: rgba(16, 24, 64, 0.8);
+          backdrop-filter: blur(10px);
+          border-bottom: 1px solid #2563eb;
+        }
+
+        .nav-brand h1 {
+          margin: 0;
+          font-size: 1.8rem;
+          background: linear-gradient(to right, #818cf8, #3b82f6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .wallet-button {
+          background: rgba(59, 130, 246, 0.2);
+          border: 1px solid #3b82f6;
+          color: #bfdbfe;
+          padding: 0.8rem 1.5rem;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .wallet-button:hover {
+          background: rgba(59, 130, 246, 0.4);
+          transform: translateY(-2px);
+        }
+
+        .hero-orbit {
+          position: relative;
+          height: 70vh;
+          overflow: hidden;
+        }
+
+        .stellar-overlay {
+          position: relative;
+          z-index: 2;
+          padding: 4rem 2rem;
+          text-align: center;
+        }
+
+        .encryption-controls {
+          margin: 2rem 0;
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        }
+
+        .crypto-button {
+          background: linear-gradient(45deg, #4f46e5, #6366f1);
+          border: none;
+          padding: 1rem 2rem;
+          border-radius: 12px;
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: 1px solid #818cf8;
+        }
+
+        .crypto-button.active {
+          box-shadow: 0 0 15px #6366f1;
+        }
+
+        .crypto-button:hover {
+          transform: scale(1.05);
+          filter: brightness(1.1);
+        }
+
+        .real-time-stats {
+          display: flex;
+          justify-content: center;
+          gap: 3rem;
+          margin-top: 4rem;
+        }
+
+        .stat-card {
+          background: rgba(30, 41, 59, 0.6);
+          padding: 2rem;
+          border-radius: 16px;
+          border: 1px solid #334155;
+          min-width: 250px;
+        }
+
+        .animated-number {
+          font-size: 2.5rem;
+          margin: 0.5rem 0;
+          color: #38bdf8;
+        }
+
+        .mission-grid {
+          display: grid;
+          gap: 2rem;
+          padding: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .mission-card {
+          background: rgba(15, 23, 42, 0.8);
+          border: 1px solid #1e293b;
+          border-radius: 16px;
+          padding: 2rem;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .mission-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(45deg, 
+            transparent 0%,
+            rgba(56, 189, 248, 0.1) 50%,
+            transparent 100%
+          );
+          pointer-events: none;
+        }
+
+        .hologram-button {
+          background: linear-gradient(45deg, #0ea5e9, #0d9488);
+          border: none;
+          padding: 1rem 2rem;
+          border-radius: 8px;
+          color: white;
+          cursor: pointer;
+          margin-top: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .hologram-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 0 15px #0ea5e9;
+        }
+
+        @keyframes nebula-pulse {
+          0% { opacity: 0.8; }
+          50% { opacity: 1; }
+          100% { opacity: 0.8; }
+        }
+      `}</style>
     </div>
   );
 }

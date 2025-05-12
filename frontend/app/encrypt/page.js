@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { ethers } from 'ethers'; // <-- Import ethers
 
 export default function EncryptPage() {
   const [file, setFile] = useState(null);
@@ -14,7 +15,7 @@ export default function EncryptPage() {
   const [downloadUrl, setDownloadUrl] = useState('');
   const [cid, setCid] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   // Blockchain related states
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
@@ -32,8 +33,8 @@ export default function EncryptPage() {
           if (accounts.length > 0) {
             setWalletConnected(true);
             setWalletAddress(accounts[0]);
-            
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            // v6: Use BrowserProvider instead of providers.Web3Provider
+            const provider = new ethers.BrowserProvider(window.ethereum);
             const network = await provider.getNetwork();
             setNetworkName(network.name === 'unknown' ? `Chain ID: ${network.chainId}` : network.name);
           }
@@ -42,14 +43,14 @@ export default function EncryptPage() {
         }
       }
     };
-    
+
     checkWallet();
-    
+
     // Set up event listeners for wallet/chain changes
     if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum.on('accountsChanged', checkWallet);
       window.ethereum.on('chainChanged', checkWallet);
-      
+
       return () => {
         window.ethereum.removeListener('accountsChanged', checkWallet);
         window.ethereum.removeListener('chainChanged', checkWallet);
@@ -63,11 +64,10 @@ export default function EncryptPage() {
   const handleConnectWallet = async () => {
     setBlockchainLoading(true);
     setBlockchainError('');
-    
     try {
       if (typeof window !== 'undefined' && window.ethereum) {
         await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
+
         // Try to switch to exSat network
         try {
           await window.ethereum.request({
@@ -80,7 +80,7 @@ export default function EncryptPage() {
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: [{
-                chainId: '0x1C20', // Hex for 7200
+                chainId: '0x1C20',
                 chainName: 'exSat Network',
                 nativeCurrency: { name: 'XSAT', symbol: 'XSAT', decimals: 18 },
                 rpcUrls: ['https://rpc.exsat.network'],
@@ -91,12 +91,13 @@ export default function EncryptPage() {
             throw switchError;
           }
         }
-        
+
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
         setWalletConnected(true);
         setWalletAddress(accounts[0]);
-        
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        // v6: Use BrowserProvider instead of providers.Web3Provider
+        const provider = new ethers.BrowserProvider(window.ethereum);
         const network = await provider.getNetwork();
         setNetworkName(network.name === 'unknown' ? `Chain ID: ${network.chainId}` : network.name);
       } else {
@@ -147,7 +148,7 @@ export default function EncryptPage() {
       // Convert chunks to UTF-8 safe Base64
       const jsonData = JSON.stringify(encryptedChunks);
       const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
-      
+
       const res = await axios.post('http://localhost:5000/upload-ipfs', {
         encryptedData: base64Data
       });
@@ -179,20 +180,20 @@ export default function EncryptPage() {
   // Store CID on blockchain
   const handleStoreOnChain = async () => {
     if (!cid) return alert('Upload to IPFS first!');
-    
+
     setBlockchainLoading(true);
     setBlockchainError('');
-    
+
     try {
       if (!walletConnected) {
         await handleConnectWallet();
         if (!walletConnected) return;
       }
-      
+
       const response = await axios.post('http://localhost:5000/store-on-chain', {
         cid
       });
-      
+
       if (response.data.success) {
         setTxHash(response.data.transactionHash);
         alert('Successfully stored on blockchain!');
@@ -208,83 +209,103 @@ export default function EncryptPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Cosmic Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute w-full h-full bg-[url('/cosmic-pattern.svg')] opacity-10 animate-pan-infinite"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse-slow-delay"></div>
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl bg-white/5 backdrop-blur-lg rounded-2xl shadow-xl p-8"
+        className="w-full max-w-2xl bg-white/5 backdrop-blur-xl rounded-2xl shadow-galaxy p-8 relative z-10"
       >
-        <div className="flex justify-between items-center mb-8">
-          <Link href="/" passHref>
-            <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition">
-              ← Back to Home
-            </button>
-          </Link>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 text-center">
-            Data Encryption Portal
-          </h1>
+        {/* Header Section */}
+        <div className="flex justify-center items-center mb-8">
+          
+          <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.7, type: "spring" }}
+          className="text-4xl font-extrabold text-center mb-8 bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent "
+        >
+          🪐 Data Encryption Portal
+        </motion.h1>
         </div>
 
-        {/* Wallet Connection UI */}
-        <div className="mb-6 p-4 bg-gray-800 rounded-lg">
-          <h2 className="text-xl font-bold text-white mb-3">Blockchain Connection</h2>
+        {/* Wallet Connection Section */}
+        <div className="mb-8 p-6 bg-gray-800/50 rounded-xl border border-gray-700/30">
+          <h2 className="text-2xl font-bold text-blue-300 mb-4">🌌 Blockchain Connection</h2>
           {walletConnected ? (
-            <div className="text-white">
-              <div className="flex justify-between items-center mb-2">
-                <div>
-                  <span className="text-gray-400">Connected: </span>
-                  <span className="font-mono">{walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}</span>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-4"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
+                  <span className="font-mono text-blue-300">
+                    {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}
+                  </span>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
                   onClick={handleDisconnectWallet}
-                  className="py-1 px-3 bg-red-500 hover:bg-red-600 rounded text-sm text-white font-bold transition"
+                  className="py-1 px-3 bg-gradient-to-r from-red-500 to-pink-600 rounded-lg text-sm text-white font-bold transition-all"
                 >
                   Disconnect
-                </button>
+                </motion.button>
               </div>
-              <p className="mb-2">
-                <span className="text-gray-400">Network: </span>
-                <span className={networkName.includes('exSat') ? 'text-green-400' : 'text-yellow-400'}>
-                  {networkName || 'Unknown'}
-                </span>
-              </p>
-              {cid && (
-                <p className="mb-2">
-                  <span className="text-gray-400">IPFS CID: </span>
-                  <span className="font-mono text-blue-300">{cid}</span>
+              <div className="space-y-2">
+                <p className="text-gray-400">
+                  Network: <span className="text-purple-300">{networkName}</span>
                 </p>
-              )}
-              {txHash && (
-                <p className="mb-2">
-                  <span className="text-gray-400">TX Hash: </span>
-                  <a 
-                    href={`https://scan.exsat.network/tx/${txHash}`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="font-mono text-green-300 hover:underline"
-                  >
-                    {txHash.substring(0, 10)}...
-                  </a>
-                </p>
-              )}
-            </div>
+                {cid && (
+                  <p className="text-gray-400">
+                    IPFS CID: <span className="text-blue-300 font-mono">{cid}</span>
+                  </p>
+                )}
+                {txHash && (
+                  <p className="text-gray-400">
+                    Transaction: {' '}
+                    <a 
+                      href={`https://scan.exsat.network/tx/${txHash}`}
+                      className="text-green-300 hover:text-green-400 transition-colors"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {txHash.substring(0, 10)}...
+                    </a>
+                  </p>
+                )}
+              </div>
+            </motion.div>
           ) : (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
               onClick={handleConnectWallet}
               disabled={blockchainLoading}
-              className={`py-2 px-4 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-bold transition ${blockchainLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-700 text-white font-bold
+                ${blockchainLoading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-space'}`}
             >
-              {blockchainLoading ? 'Connecting...' : 'Connect Wallet'}
-            </button>
-          )}
-          {blockchainError && (
-            <p className="mt-2 text-red-400 text-sm">{blockchainError}</p>
+              {blockchainLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Connecting...</span>
+                </div>
+              ) : 'Connect Galactic Wallet'}
+            </motion.button>
           )}
         </div>
 
+        {/* File Upload Section */}
         <motion.div
           whileHover={{ scale: 1.02 }}
-          className="mb-8 border-2 border-dashed border-gray-700 rounded-xl p-6 text-center cursor-pointer"
+          className="mb-8 border-2 border-dashed border-blue-500/30 rounded-xl p-8 text-center cursor-pointer
+            bg-gradient-to-br from-gray-900/50 to-gray-800/30 backdrop-blur-sm"
         >
           <input 
             type="file" 
@@ -294,186 +315,174 @@ export default function EncryptPage() {
           />
           <label 
             htmlFor="fileInput" 
-            className="cursor-pointer text-gray-300 hover:text-white transition-colors"
+            className="cursor-pointer space-y-4"
           >
             {file ? (
-              <span className="text-green-400">✓ {file.name}</span>
-            ) : (
-              <>
-                <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              <motion.div
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                className="text-green-400 flex items-center justify-center space-x-2"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                <p className="text-lg">Click to select file</p>
-                <p className="text-sm text-gray-500 mt-2">Supports .txt, .json, .csv</p>
-              </>
+                <span className="text-lg">{file.name}</span>
+              </motion.div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 1 }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="space-y-4"
+              >
+                <div className="inline-block p-4 bg-blue-500/10 rounded-full">
+                  <svg className="w-12 h-12 mx-auto text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                </div>
+                <p className="text-xl text-blue-300">Drag or click to upload file</p>
+                <p className="text-sm text-blue-400/70">Supported formats: .txt, .json, .csv</p>
+              </motion.div>
             )}
           </label>
         </motion.div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleEncrypt}
-          disabled={!file || loading}
-          className={`w-full py-3 rounded-lg font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white 
-            ${!file || loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg transition-all'}`}
-        >
-          {loading ? '🔐 Encrypting...' : file ? '🔒 Encrypt File' : 'Select File First'}
-        </motion.button>
-
-        {key && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-8 space-y-4 bg-gray-800/50 rounded-xl p-6"
+        {/* Encryption Controls */}
+        <motion.div className="space-y-6">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleEncrypt}
+            disabled={!file || loading}
+            className={`w-full py-4 rounded-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white
+              shadow-space transform transition-all ${!file || loading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'}`}
           >
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-blue-400">Encryption Details</h3>
-              <div className="flex flex-col space-y-1">
-                <span className="text-sm text-gray-400">Encryption Key</span>
-                <code className="p-2 bg-gray-900 rounded-md break-all">{key}</code>
+            {loading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Encrypting...</span>
               </div>
-              <div className="flex flex-col space-y-1">
-                <span className="text-sm text-gray-400">Initialization Vector (IV)</span>
-                <code className="p-2 bg-gray-900 rounded-md break-all">{iv}</code>
+            ) : (
+              <div className="flex items-center justify-center space-x-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <span>{file ? 'Activate Quantum Encryption' : 'Select File First'}</span>
               </div>
-            </div>
+            )}
+          </motion.button>
 
-            <div className="flex flex-col gap-4">
-              {downloadUrl && (
-                <motion.a
-                  whileHover={{ scale: 1.02 }}
-                  href={downloadUrl}
-                  download="encrypted_chunks.json"
-                  className="inline-flex items-center justify-center w-full py-2 px-4 bg-green-600 hover:bg-green-700 rounded-lg text-white transition-all"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                  </svg>
-                  Download Encrypted File
-                </motion.a>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleAnchor}
-                  disabled={!hashes.length || loading}
-                  className={`py-2 px-4 bg-green-600 hover:bg-green-700 rounded-lg text-white transition-all
-                    ${!hashes.length || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {loading ? 'Anchoring...' : '🔗 Anchor on Bitcoin'}
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleIPFSUpload}
-                  disabled={!encryptedChunks.length || loading}
-                  className={`py-2 px-4 bg-orange-600 hover:bg-orange-700 rounded-lg text-white transition-all
-                    ${!encryptedChunks.length || loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {loading ? '⏫ Uploading...' : '🌐 Upload to IPFS'}
-                </motion.button>
-              </div>
-
-              {/* Blockchain store button - only show after IPFS upload */}
-              {cid && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleStoreOnChain}
-                  disabled={blockchainLoading}
-                  className={`py-2 px-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white transition-all
-                    ${blockchainLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {blockchainLoading ? 'Processing...' : '💼 Store on exSat Blockchain'}
-                </motion.button>
-              )}
-
-              {cid && (
-                <div className="mt-4 p-4 bg-gray-900 rounded-lg">
-                  <p className="text-green-400 mb-2">IPFS CID: {cid}</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => navigator.clipboard.writeText(cid)}
-                      className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700"
-                    >
-                      📋 Copy CID
-                    </button>
-                    <a
-                      href={`https://gateway.pinata.cloud/ipfs/${cid}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 bg-purple-600 rounded hover:bg-purple-700"
-                    >
-                      🔗 View on IPFS
-                    </a>
+          {key && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6 bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm"
+            >
+              {/* Encryption Details */}
+              <div className="space-y-4">
+                <h3 className="text-2xl font-bold text-blue-300">🔑 Encryption Matrix</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gray-900/50 rounded-lg border border-blue-500/30">
+                    <h4 className="text-sm text-blue-400 mb-2">Encryption Key</h4>
+                    <div className="flex items-center justify-between">
+                      <code className="text-sm text-blue-300 font-mono truncate">{key}</code>
+                      <button 
+                        onClick={() => navigator.clipboard.writeText(key)}
+                        className="p-1 hover:bg-blue-500/10 rounded-md transition-colors"
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-900/50 rounded-lg border border-purple-500/30">
+                    <h4 className="text-sm text-purple-400 mb-2">Initialization Vector</h4>
+                    <div className="flex items-center justify-between">
+                      <code className="text-sm text-purple-300 font-mono truncate">{iv}</code>
+                      <button 
+                        onClick={() => navigator.clipboard.writeText(iv)}
+                        className="p-1 hover:bg-purple-500/10 rounded-md transition-colors"
+                      >
+                        📋
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={handleIPFSUpload}
+                  disabled={!encryptedChunks.length || loading}
+                  className={`p-4 rounded-xl bg-gradient-to-br from-blue-600/50 to-blue-800/30 backdrop-blur-sm
+                    border border-blue-500/30 ${!encryptedChunks.length || loading ? 'opacity-50' : 'hover:border-blue-400'}`}
+                >
+                  <div className="flex items-center space-x-2 justify-center">
+                    <span>🌌</span>
+                    <span>IPFS Upload</span>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={handleAnchor}
+                  disabled={!hashes.length || loading}
+                  className={`p-4 rounded-xl bg-gradient-to-br from-purple-600/50 to-purple-800/30 backdrop-blur-sm
+                    border border-purple-500/30 ${!hashes.length || loading ? 'opacity-50' : 'hover:border-purple-400'}`}
+                >
+                  <div className="flex items-center space-x-2 justify-center">
+                    <span>⛓️</span>
+                    <span>Bitcoin Anchor</span>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  onClick={handleStoreOnChain}
+                  disabled={blockchainLoading}
+                  className={`p-4 rounded-xl bg-gradient-to-br from-green-600/50 to-green-800/30 backdrop-blur-sm
+                    border border-green-500/30 ${blockchainLoading ? 'opacity-50' : 'hover:border-green-400'}`}
+                >
+                  <div className="flex items-center space-x-2 justify-center">
+                    <span>💎</span>
+                    <span>Blockchain Store</span>
+                  </div>
+                </motion.button>
+              </div>
+
+              {/* CID Display */}
+              {cid && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-6 p-4 bg-gray-900/50 rounded-lg border border-blue-500/30"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-blue-300">IPFS Content ID:</span>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => navigator.clipboard.writeText(cid)}
+                        className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 rounded-md transition-colors"
+                      >
+                        📋 Copy
+                      </button>
+                      <a
+                        href={`https://gateway.pinata.cloud/ipfs/${cid}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-purple-500/10 hover:bg-purple-500/20 rounded-md transition-colors"
+                      >
+                        🔗 View
+                      </a>
+                    </div>
+                  </div>
+                  <code className="text-sm text-blue-300 font-mono break-all">{cid}</code>
+                </motion.div>
               )}
-            </div>
-          </motion.div>
-        )}
-
-        <AnimatePresence>
-          {opReturns.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-8"
-            >
-              <h3 className="text-xl font-semibold text-green-300 mb-2">OP_RETURN Scripts:</h3>
-              <ul className="bg-gray-800 rounded-lg p-4 space-y-1 max-h-40 overflow-y-auto text-white text-sm">
-                {opReturns.map((script, idx) => (
-                  <motion.li
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                  >
-                    {script}
-                  </motion.li>
-                ))}
-              </ul>
             </motion.div>
           )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {hashes.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="mt-8"
-            >
-              <h3 className="text-xl font-semibold text-blue-300 mb-2">Chunk Hashes:</h3>
-              <ul className="bg-gray-800 rounded-lg p-4 space-y-1 max-h-40 overflow-y-auto text-white text-sm">
-                {hashes.map((hash, idx) => (
-                  <motion.li
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="flex items-center space-x-2"
-                  >
-                    <span className="text-gray-400 mr-2">{idx + 1}.</span>
-                    <input
-                      type="text"
-                      className="flex-1 bg-gray-900 border border-blue-400 rounded px-2 py-1 text-white"
-                      value={hash}
-                      readOnly
-                      style={{ minWidth: 0 }}
-                    />
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </motion.div>
       </motion.div>
     </div>
   );
