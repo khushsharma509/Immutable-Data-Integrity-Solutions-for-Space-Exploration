@@ -51,21 +51,21 @@ Traditional centralized storage solutions fail to meet these requirements, riski
 - Pinata API Keys (Get from [Pinata Portal](https://app.pinata.cloud/))
 
 ### Installation
-git clone https://github.com/your-repo/space-data-integrity.git
-cd space-data-integrity
-npm install
-cp .env.example .env
+- git clone https://github.com/your-repo/space-data-integrity.git
+- cd space-data-integrity
+- npm install
+- cp .env.example .env
 
 
-Add to `.env`:
-Pinata Configuration
-PINATA_API_KEY=your_pinata_api_key
-PINATA_SECRET_KEY=your_pinata_secret_key
+- Add to `.env`:
+- Pinata Configuration
+- PINATA_API_KEY=your_pinata_api_key
+- PINATA_SECRET_KEY=your_pinata_secret_key
 
-ExSat Testnet
-EXSAT_RPC_URL=https://evm-tst3.exsat.network
-PRIVATE_KEY=your_metamask_private_key
-CONTRACT_ADDRESS=0xD8ab45e342b310F3Ee9cD418e2fB33053fF076eE
+- ExSat Testnet
+- EXSAT_RPC_URL=https://evm-tst3.exsat.network
+- PRIVATE_KEY=your_metamask_private_key
+- CONTRACT_ADDRESS=0xD8ab45e342b310F3Ee9cD418e2fB33053fF076eE
 
 
 ### Running the Application
