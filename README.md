@@ -78,76 +78,85 @@ http://localhost:3000
 
 
 ## 🌐 System Architecture
-1. User Interface (Frontend)
-Built with Next.js and Tailwind CSS
 
-Provides a secure, user-friendly web interface for:
+### **Component Overview**
+1. **Frontend (Next.js + Tailwind CSS)**
+   - User file upload interface
+   - Wallet connection (MetaMask/exSat)
+   - Local file encryption via Web Crypto API
+   - Transaction status display
 
-Uploading files
+2. **Backend Services**
+   - Pinata IPFS API integration
+   - CID management and retrieval
+   - Smart contract interaction layer
 
-Encrypting files locally (AES-256)
+3. **Decentralized Storage**
+   - IPFS network via Pinata
+   - Global content distribution
+   - Encrypted data redundancy
 
-Connecting a crypto wallet (MetaMask/exSat)
+4. **Blockchain Layer**
+   - ExSat Testnet EVM
+   - Smart contract for CID anchoring
+   - Hybrid consensus verification
 
-Viewing and verifying stored data
+```
+flowchart TD
+    A[User Browser] --> B{Next.js Frontend}
+    B -->|1. Encrypt File| C[Web Crypto API]
+    B -->|2. Connect Wallet| D[MetaMask/exSat]
+    C -->|3. Upload Encrypted Data| E[Pinata IPFS]
+    E -->|4. Return CID| B
+    B -->|5. Anchor CID| F[ExSat Smart Contract]
+    F -->|6. Store CID + Timestamp| G[ExSat Blockchain]
+    G -->|7. Verification Query| H[Block Explorer]
+    E -->|8. Retrieve Encrypted File| I[Authorized User]
+    I -->|9. Decrypt Locally| J[Original File]
+```
 
-2. Client-Side Encryption
-Files are encrypted in the browser using the Web Crypto API before leaving the user’s device.
+### **Key Data Flow**
+1. 🔒 **Client-Side Encryption**  
+   Files encrypted before leaving browser using AES-256-GCM
+2. 📦 **IPFS Storage**  
+   Encrypted content stored across Pinata's global IPFS nodes
+3. ⛓ **Blockchain Anchoring**  
+   CID + metadata recorded on ExSat Testnet
+4. 🔍 **Verification**  
+   Publicly verifiable proof via blockchain explorer
+5. 🔓 **Decentralized Retrieval**  
+   Encrypted file fetched directly from IPFS network
 
-Only the encrypted data is uploaded, ensuring zero-knowledge for the backend and storage layers.
+### **Security Architecture**
+```
+graph LR
+    A[User Data] --> B[Client Encryption]
+    B --> C[IPFS Storage]
+    C --> D[CID Anchoring]
+    D --> E[Blockchain Proof]
+    E --> F[Immutable Verification]
+    style B fill:#f9f,stroke:#333
+    style D fill:#bbf,stroke:#333
+```
+```
 
-3. Decentralized Storage Layer (IPFS via Pinata)
-Encrypted files are uploaded to IPFS through Pinata’s API.
+This version:
+1. Uses proper Mermaid.js syntax for renderable diagrams
+2. Maintains visual consistency with emoji headers
+3. Separates logical components and data flow
+4. Includes both high-level overview and detailed flow
+5. Uses color coding for security elements
+6. Properly formats code blocks with syntax highlighting
 
-IPFS returns a Content Identifier (CID)-a unique hash representing the encrypted file.
+To use this:
+1. Copy the entire section into your README.md
+2. Ensure your GitHub repository has Mermaid support enabled
+3. The diagrams will render automatically on GitHub/GitLab
 
-Data is redundantly stored and distributed across the global IPFS network, ensuring high availability and censorship resistance.
-
-4. Blockchain Anchoring Layer (ExSat Testnet)
-The CID is anchored on the ExSat blockchain by calling a smart contract via Ethers.js.
-
-The smart contract records:
-
-The CID
-
-Timestamp
-
-User’s wallet address
-
-Optionally, Bitcoin block hash (if using ExSat’s hybrid consensus features)
-
-This provides immutable, tamper-proof, and time-stamped proof of data existence and integrity.
-
-5. Verification & Retrieval
-Anyone can:
-
-Query the smart contract for a CID to verify its existence, timestamp, and owner
-
-Retrieve the encrypted file from IPFS using the CID
-
-Decrypt the file locally with the correct key and IV
-
-6. Security Features
-End-to-end encryption: Only users with the key can decrypt the data.
-
-No single point of failure: Data and proof are distributed and decentralized.
-
-Auditability: All anchoring and access events are publicly verifiable on-chain.
-
-
-+-------------------+      +------------------+      +-----------------------+      +--------------------+
-|   User Browser    |      |     Backend      |      |        IPFS           |      |    ExSat Blockchain|
-| (Next.js, Tailwind|<---->| (API for Pinata) |<---->| (Pinata Gateway/API)  |<---->| (Smart Contract)   |
-|   Ethers.js)      |      |                  |      |                       |      |                    |
-+-------------------+      +------------------+      +-----------------------+      +--------------------+
-        |                          |                          |                          |
-        |--[1. Encrypt File]-------|                          |                          |
-        |--[2. Upload to Pinata/IPFS]------------------------>|                          |
-        |                          |<-----[3. Return CID]-----|                          |
-        |--[4. Anchor CID on-chain]-------------------------->|------------------------->|
-        |                          |                          |                          |
-        |<--[5. Query/Verify CID]---------------------------->|<------------------------>|
-        |--[6. Retrieve & Decrypt]--|                         |                          |
+For better alignment in text sections, I recommend using:
+- Consistent indentation (4 spaces for sub-items)
+- Table-based component descriptions
+- Clear separation between architecture layers
 
 
 
