@@ -26,6 +26,7 @@ export default function DecryptPage() {
   const [downloadUrl, setDownloadUrl] = useState('');
   const [downloadExt, setDownloadExt] = useState('txt');
   const [loading, setLoading] = useState(false);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     if (decrypted && encFile) {
@@ -44,7 +45,7 @@ export default function DecryptPage() {
     if (!txHash) return alert('Enter transaction hash!');
     setLoading(true);
     try {
-      const res = await axios.get(`http://localhost:5000/tx-to-cid`, {
+      const res = await axios.get(`${API_BASE_URL}/tx-to-cid`, {
         params: { txHash }
       });
       if (res.data.success && res.data.cid) {
@@ -65,7 +66,7 @@ export default function DecryptPage() {
     if (!cid) return alert('Enter CID first!');
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/fetch-ipfs', { cid });
+      const response = await axios.post(`${API_BASE_URL}/fetch-ipfs`, { cid });
       if (!response.data.data) throw new Error('No data received from IPFS');
       const decodedData = safeBase64Decode(response.data.data);
       const parsedChunks = JSON.parse(decodedData);
@@ -95,7 +96,7 @@ export default function DecryptPage() {
     if (!chunks.length || !key || !iv) return alert('Provide all inputs!');
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/reconstruct', { chunks, key, iv });
+      const res = await axios.post(`${API_BASE_URL}/reconstruct`, { chunks, key, iv });
       if (!res.data.data) throw new Error('No data received from decryption');
       setDecrypted(res.data.data);
     } catch (error) {

@@ -31,51 +31,51 @@ export default function SpaceBlockchainExplorer() {
 
 
       {/* Hero Section */}
-      <div className="hero-orbit mb-45">
-        <div className="stellar-overlay text-2xl">
-          <h1 className='text-6xl mb-8'>🌌 SpaceLedger-Anchored Space Data</h1>
-          <h2 className="flex items-center justify-center gap-2 mb-18 text-center text-3xl">
-            Powered by
-            <Image
-              src="/assets/exsat-logo-removebg-preview.png"
-              alt="exSat logo"
-              width={35}
-              height={35}
-              className="object-contain"
-            />
-            exSat(Blockchain)
-          </h2>
-          <div className="encryption-controls">
-            <Link
-              href="/encrypt"
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow hover:scale-105 transition"
-            >
-              🔒 Encrypt Transmission
-            </Link>
-            <Link
-              href="/decrypt"
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold shadow hover:scale-105 transition flex items-center gap-3"
-            >
-              🔓 Decrypt Archives
-            </Link>
-          </div>
-
-          <div className="real-time-stats grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 px-4 max-w-4xl mx-auto">
-  <div className="stat-card bg-slate-800/80 rounded-2xl p-6 shadow-lg border border-slate-700/50 text-center">
-    <h3 className="text-xl font-semibold mb-2">🚀 Space Data Blocks</h3>
-    <div className="text-3xl font-bold text-blue-400 h-12 flex items-center justify-center">
-      <NumberTypewriter number={1402921} />
+     <div className="hero-orbit mb-10 sm:mb-16 md:mb-24 lg:mb-32">
+  <div className="stellar-overlay text-xl sm:text-2xl px-4 sm:px-8 md:px-16">
+    <h1 className="text-4xl sm:text-5xl md:text-6xl mb-6 sm:mb-8 text-center">🌌 SpaceLedger-Anchored Space Data</h1>
+    <h2 className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-8 sm:mb-12 text-center text-2xl sm:text-3xl">
+      Powered by
+      <Image
+        src="/assets/exsat-logo-removebg-preview.png"
+        alt="exSat logo"
+        width={35}
+        height={35}
+        className="object-contain"
+      />
+      exSat(Blockchain)
+    </h2>
+    <div className="encryption-controls flex flex-col sm:flex-row gap-4 justify-center mb-8">
+      <Link
+        href="/encrypt"
+        className="px-6 py-3 sm:px-8 sm:py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold shadow hover:scale-105 transition text-center"
+      >
+        🔒 Encrypt Transmission
+      </Link>
+      <Link
+        href="/decrypt"
+        className="px-6 py-3 sm:px-8 sm:py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold shadow hover:scale-105 transition text-center"
+      >
+        🔓 Decrypt Archives
+      </Link>
     </div>
-  </div>
-  <div className="stat-card bg-slate-800/80 rounded-2xl p-6 shadow-lg border border-slate-700/50 text-center">
-    <h3 className="text-xl font-semibold mb-2">🛰 Live Satellites</h3>
-    <div className="text-3xl font-bold text-purple-400 h-12 flex items-center justify-center">
-      <NumberTypewriter number={2843} />
+    <div className="real-time-stats grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 px-2 sm:px-4 max-w-full sm:max-w-4xl mx-auto">
+      <div className="stat-card bg-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-700/50 text-center">
+        <h3 className="text-lg sm:text-xl font-semibold mb-2">🚀 Space Data Blocks</h3>
+        <div className="text-2xl sm:text-3xl font-bold text-blue-400 h-10 sm:h-12 flex items-center justify-center">
+          <NumberTypewriter number={1402921} />
+        </div>
+      </div>
+      <div className="stat-card bg-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-lg border border-slate-700/50 text-center">
+        <h3 className="text-lg sm:text-xl font-semibold mb-2">🛰 Live Satellites</h3>
+        <div className="text-2xl sm:text-3xl font-bold text-purple-400 h-10 sm:h-12 flex items-center justify-center">
+          <NumberTypewriter number={2843} />
+        </div>
+      </div>
     </div>
   </div>
 </div>
-        </div>
-      </div>
+
 
       {/* Website Facts Section */}
       <div className="max-w-6xl mx-auto my-16 px-4">

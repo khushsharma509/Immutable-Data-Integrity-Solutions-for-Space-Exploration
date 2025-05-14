@@ -23,7 +23,35 @@ export default function EncryptPage() {
   const [txHash, setTxHash] = useState('');
   const [blockchainLoading, setBlockchainLoading] = useState(false);
   const [blockchainError, setBlockchainError] = useState('');
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+
+
+    const handleCopy = async (text) => {
+    // Try Clipboard API
+    if (typeof navigator !== "undefined" && navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Copied to clipboard!");
+        return;
+      } catch (err) {
+        // Fallback below
+      }
+    }
+    // Fallback for older browsers
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert("Copied to clipboard!");
+    } catch (err) {
+      alert("Copy to clipboard is not supported in this browser.");
+    }
+  };
   // Check wallet connection on component mount
   useEffect(() => {
     const checkWallet = async () => {
@@ -126,7 +154,7 @@ export default function EncryptPage() {
     setLoading(true);
     try {
       const text = await file.text();
-      const res = await axios.post('http://localhost:5000/encrypt', { data: text });
+      const res = await axios.post(`${API_BASE_URL}/encrypt`, { data: text });
       setEncryptedChunks(res.data.chunks);
       setHashes(res.data.hashes || []);
       setKey(res.data.key);
@@ -149,7 +177,7 @@ export default function EncryptPage() {
       const jsonData = JSON.stringify(encryptedChunks);
       const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
 
-      const res = await axios.post('http://localhost:5000/upload-ipfs', {
+      const res = await axios.post(`${API_BASE_URL}/upload-ipfs`, {
         encryptedData: base64Data
       });
       setCid(res.data.cid);
@@ -166,7 +194,7 @@ export default function EncryptPage() {
     const scripts = [];
     try {
       for (const hash of hashes) {
-        const res = await axios.post('http://localhost:5000/anchor', { hash });
+        const res = await axios.post(`${API_BASE_URL}/anchor`, { hash });
         scripts.push(res.data.opReturnScript);
       }
       setOpReturns(scripts);
@@ -190,7 +218,7 @@ export default function EncryptPage() {
         if (!walletConnected) return;
       }
 
-      const response = await axios.post('http://localhost:5000/store-on-chain', {
+      const response = await axios.post(`${API_BASE_URL}/store-on-chain`, {
         cid
       });
 
@@ -387,7 +415,7 @@ export default function EncryptPage() {
                     <div className="flex items-center justify-between">
                       <code className="text-sm text-blue-300 font-mono truncate">{key}</code>
                       <button 
-                        onClick={() => navigator.clipboard.writeText(key)}
+                        onClick={() => handleCopy(key)}
                         className="p-1 hover:bg-blue-500/10 rounded-md transition-colors"
                       >
                         📋
@@ -399,7 +427,7 @@ export default function EncryptPage() {
                     <div className="flex items-center justify-between">
                       <code className="text-sm text-purple-300 font-mono truncate">{iv}</code>
                       <button 
-                        onClick={() => navigator.clipboard.writeText(iv)}
+                        onClick={() => handleCopy(iv)}
                         className="p-1 hover:bg-purple-500/10 rounded-md transition-colors"
                       >
                         📋
@@ -462,7 +490,7 @@ export default function EncryptPage() {
                     <span className="text-blue-300">IPFS Content ID:</span>
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => navigator.clipboard.writeText(cid)}
+                        onClick={() => handleCopy(cid)}
                         className="px-3 py-1 bg-blue-500/10 hover:bg-blue-500/20 rounded-md transition-colors"
                       >
                         📋 Copy
