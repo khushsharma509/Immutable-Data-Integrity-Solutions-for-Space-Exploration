@@ -56,7 +56,6 @@ cd space-data-integrity
 npm install
 cp .env.example .env
 
-text
 
 Add to `.env`:
 Pinata Configuration
@@ -68,40 +67,99 @@ EXSAT_RPC_URL=https://evm-tst3.exsat.network
 PRIVATE_KEY=your_metamask_private_key
 CONTRACT_ADDRESS=0xD8ab45e342b310F3Ee9cD418e2fB33053fF076eE
 
-text
 
 ### Running the Application
 1. Start development server:
 npm run dev
 
-text
 
 2. Access the application at:
 http://localhost:3000
 
-text
 
 ## 🌐 System Architecture
-graph TD
-A[Frontend] -->|Next.js| B[Browser]
-B -->|Ethers.js| C[ExSat Testnet]
-B -->|IPFS-HTTP-Client| D[Pinata IPFS]
-C -->|Smart Contract| E[CID Anchoring]
-D -->|Encrypted Data| F[Global IPFS Nodes]
-E -->|Verification| G[Block Explorer]
+1. User Interface (Frontend)
+Built with Next.js and Tailwind CSS
 
-text
+Provides a secure, user-friendly web interface for:
+
+Uploading files
+
+Encrypting files locally (AES-256)
+
+Connecting a crypto wallet (MetaMask/exSat)
+
+Viewing and verifying stored data
+
+2. Client-Side Encryption
+Files are encrypted in the browser using the Web Crypto API before leaving the user’s device.
+
+Only the encrypted data is uploaded, ensuring zero-knowledge for the backend and storage layers.
+
+3. Decentralized Storage Layer (IPFS via Pinata)
+Encrypted files are uploaded to IPFS through Pinata’s API.
+
+IPFS returns a Content Identifier (CID)-a unique hash representing the encrypted file.
+
+Data is redundantly stored and distributed across the global IPFS network, ensuring high availability and censorship resistance.
+
+4. Blockchain Anchoring Layer (ExSat Testnet)
+The CID is anchored on the ExSat blockchain by calling a smart contract via Ethers.js.
+
+The smart contract records:
+
+The CID
+
+Timestamp
+
+User’s wallet address
+
+Optionally, Bitcoin block hash (if using ExSat’s hybrid consensus features)
+
+This provides immutable, tamper-proof, and time-stamped proof of data existence and integrity.
+
+5. Verification & Retrieval
+Anyone can:
+
+Query the smart contract for a CID to verify its existence, timestamp, and owner
+
+Retrieve the encrypted file from IPFS using the CID
+
+Decrypt the file locally with the correct key and IV
+
+6. Security Features
+End-to-end encryption: Only users with the key can decrypt the data.
+
+No single point of failure: Data and proof are distributed and decentralized.
+
+Auditability: All anchoring and access events are publicly verifiable on-chain.
+
+
++-------------------+      +------------------+      +-----------------------+      +--------------------+
+|   User Browser    |      |     Backend      |      |        IPFS           |      |    ExSat Blockchain|
+| (Next.js, Tailwind|<---->| (API for Pinata) |<---->| (Pinata Gateway/API)  |<---->| (Smart Contract)   |
+|   Ethers.js)      |      |                  |      |                       |      |                    |
++-------------------+      +------------------+      +-----------------------+      +--------------------+
+        |                          |                          |                          |
+        |--[1. Encrypt File]-------|                          |                          |
+        |--[2. Upload to Pinata/IPFS]------------------------>|                          |
+        |                          |<-----[3. Return CID]-----|                          |
+        |--[4. Anchor CID on-chain]-------------------------->|------------------------->|
+        |                          |                          |                          |
+        |<--[5. Query/Verify CID]---------------------------->|<------------------------>|
+        |--[6. Retrieve & Decrypt]--|                         |                          |
+
+
 
 ## 🔒 Smart Contract Interaction
 Deploy your own contract to ExSat Testnet:
 npx hardhat run scripts/deploy.js --network exsat
 
-text
+
 
 Verify contract:
 npx hardhat verify --network exsat <CONTRACT_ADDRESS>
 
-text
 
 ## 📡 Contact
 - Mission Control: [contact@spacedata.xyz](mailto:contact@spacedata.xyz)
