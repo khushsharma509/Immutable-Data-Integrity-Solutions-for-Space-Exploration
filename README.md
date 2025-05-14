@@ -138,7 +138,7 @@ graph LR
     style B fill:#f9f,stroke:#333
     style D fill:#bbf,stroke:#333
 ```
-```
+
 
 This version:
 1. Uses proper Mermaid.js syntax for renderable diagrams
