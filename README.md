@@ -140,26 +140,6 @@ graph LR
 ```
 
 
-This version:
-1. Uses proper Mermaid.js syntax for renderable diagrams
-2. Maintains visual consistency with emoji headers
-3. Separates logical components and data flow
-4. Includes both high-level overview and detailed flow
-5. Uses color coding for security elements
-6. Properly formats code blocks with syntax highlighting
-
-To use this:
-1. Copy the entire section into your README.md
-2. Ensure your GitHub repository has Mermaid support enabled
-3. The diagrams will render automatically on GitHub/GitLab
-
-For better alignment in text sections, I recommend using:
-- Consistent indentation (4 spaces for sub-items)
-- Table-based component descriptions
-- Clear separation between architecture layers
-
-
-
 ## 🔒 Smart Contract Interaction
 Deploy your own contract to ExSat Testnet:
 npx hardhat run scripts/deploy.js --network exsat
