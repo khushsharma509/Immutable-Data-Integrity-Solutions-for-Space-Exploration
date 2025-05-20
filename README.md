@@ -150,10 +150,6 @@ Verify contract:
 npx hardhat verify --network exsat <CONTRACT_ADDRESS>
 
 
-## 📡 Contact
-- Mission Control: [contact@spacedata.xyz](mailto:contact@spacedata.xyz)
-- Discord: [Join SpaceChain](https://discord.gg/your-invite-link)
-- GitHub Issues: [Report Bugs](https://github.com/your-repo/issues)
 
 ## 📜 License
 MIT License
